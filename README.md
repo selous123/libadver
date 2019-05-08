@@ -17,6 +17,7 @@ git clone https://github.com/selous123/libadver.git
 python setup.py install
 &&
 pip install .
+//pip install -e . ##editable mode
 ```
 
 ## Examples
