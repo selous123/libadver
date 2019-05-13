@@ -1,9 +1,9 @@
 import torch.nn as nn
 import sys
-sys.path.append("..")
-import utils
-sys.path.append("../models")
-import generators
+sys.path.append("../")
+import libadver.utils as utils
+
+import libadver.models.generators as generators
 import torch
 import torchvision.transforms as transforms
 import torchvision.models as models
