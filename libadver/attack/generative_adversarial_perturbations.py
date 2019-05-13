@@ -13,16 +13,20 @@ import warnings
 import os
 
 class GenerativeAdversarialPerturbations():
+    """
+    This class implements CVPR2018 paper Generative Adversarial Perturbations
+    Only on Image-dependent Perturbations
+    Paper Link: (Poursaeed et al. 2018): https://arxiv.org/abs/1712.02328
+    Official implements (github): https://github.com/OmidPoursaeed/Generative_Adversarial_Perturbations
+    Date : 2019.5.13
+    """
     def __init__(self, model, attackModel, **kwargs):
         if not isinstance(model, nn.Module):
             raise TypeError("The model argument should be the instance of"
                             "torch.nn.Module")
         self.pretrained_clf = model
         self.attackModel = attackModel
-
         self.parse_params(**kwargs)
-
-
 
     def train(self, trainLoader, saveModelPath):
         """
