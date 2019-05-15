@@ -26,6 +26,8 @@ class FastGradientSignMethod():
         criterion = nn.CrossEntropyLoss()
         with torch.enable_grad():
             outputs = self.model(x)
+            if isinstance(outputs, list):
+                outputs = outputs[0]
             l = criterion(outputs, y)
         gradient = torch.autograd.grad(l, [x])[0]
 
