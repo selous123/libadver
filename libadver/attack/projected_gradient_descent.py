@@ -42,7 +42,7 @@ class ProjectGradientDescent():
             x = x + torch.zeros_like(x).uniform_(-self.eps, self.eps)
 
         ## BIM
-        criterion = nn.CrossEntropyLoss()
+        criterion = self.criterion
         for i in range(self.nb_iter):
             self.model.zero_grad()
             x.requires_grad_()
@@ -79,6 +79,7 @@ class ProjectGradientDescent():
                    rand_init=None,
                    rand_minmax=0.3,
                    sanity_checks=True,
+                   criterion = nn.CrossEntropyLoss(),
                    **kwargs):
         """
         Take in a dictionary of parameters and applies attack-specific checks
@@ -117,6 +118,7 @@ class ProjectGradientDescent():
         self.ord = ord
         self.clip_min = clip_min
         self.clip_max = clip_max
+        self.criterion = criterion
 
         if isinstance(eps, float) and isinstance(eps_iter, float):
           # If these are both known at compile time, we can check before anything
