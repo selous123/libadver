@@ -43,15 +43,22 @@ class GenerativeAdversarialPerturbations():
             minAcc = 100
 
 
-            for batchIdx, (images, labels) in enumerate(trainLoader):
+            for batchIdx, data in enumerate(trainLoader):
                 if batchIdx > self.MaxIter:
                     break
-
+                ## for IPIM-2019 paper.
+                if isinstance(data, dict):
+                    images, labels = data['image'], data['label']
+                else:
+                    images, labels = data
                 images, labels = images.cuda(), labels.cuda()
 
                 #non-targeted
                 if self.targeted is False:
+
                     pretrained_label_float = self.pretrained_clf(images)
+                    if isinstance(pretrained_label_float, list):
+                        pretrained_label_float = pretrained_label_float[0]
                     _, self.y_target = torch.min(pretrained_label_float, 1)
                 #target
                 else:
@@ -87,7 +94,7 @@ class GenerativeAdversarialPerturbations():
             if minAcc > curAcc:
                 minAcc = curAcc
                 torch.save(self.attackModel.state_dict(), self.attackModelPath)
-                print("minAcc : %.4f" %minAcc)
+                print("\n minAcc : %.4f" %minAcc)
 
     def generate(self, inputs):
         """
