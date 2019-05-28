@@ -1,5 +1,30 @@
 import numpy as np
 from PIL import Image
+import copy
+
+def recreate_image(im_as_var, mean, std):
+    """
+        Recreates images from a torch variable, sort of reverse preprocessing
+    Args:
+        im_as_var (torch variable): Image to recreate [3 * 224 * 224]
+    returns:
+        recreated_im (numpy arr): Recreated image in array
+    """
+    #reverse_mean = [-0.485, -0.456, -0.406]
+    #reverse_std = [1/0.229, 1/0.224, 1/0.225]
+    reverse_mean = [-i for i in mean]
+    reverse_std = [1/i for i in std]
+    recreated_im = copy.copy(im_as_var.data.numpy())
+    for c in range(3):
+        recreated_im[c] /= reverse_std[c]
+        recreated_im[c] -= reverse_mean[c]
+    recreated_im[recreated_im > 1] = 1
+    recreated_im[recreated_im < 0] = 0
+    recreated_im = np.round(recreated_im * 255)
+
+    recreated_im = np.uint8(recreated_im).transpose(1, 2, 0)
+    return recreated_im
+
 
 def convert_to_grayscale(im_as_arr):
     """
@@ -61,3 +86,55 @@ def save_image(im, path):
             im = im.transpose(1, 2, 0)
         im = Image.fromarray(im.astype(np.uint8))
     im.save(path)
+
+def save_class_activation_images(org_img, activation_map, file_name):
+    """
+        Saves cam activation map and activation map on the original image
+
+    Args:
+        org_img (PIL img): Original image
+        activation_map (numpy arr): Activation map (grayscale) 0-255
+        file_name (str): File name of the exported image
+    """
+    if not os.path.exists('../results'):
+        os.makedirs('../results')
+    # Grayscale activation map
+    heatmap, heatmap_on_image = apply_colormap_on_image(org_img, activation_map, 'jet')
+    # Save colored heatmap
+    path_to_file = os.path.join('../results', file_name+'_Cam_Heatmap.png')
+    print(np.max(heatmap))
+    save_image(heatmap, path_to_file)
+    # Save heatmap on iamge
+    print()
+    print(np.max(heatmap_on_image))
+    path_to_file = os.path.join('../results', file_name+'_Cam_On_Image.png')
+    save_image(heatmap_on_image, path_to_file)
+    # SAve grayscale heatmap
+    print()
+    print(np.max(activation_map))
+    path_to_file = os.path.join('../results', file_name+'_Cam_Grayscale.png')
+    save_image(activation_map, path_to_file)
+
+
+def apply_colormap_on_image(org_im, activation, colormap_name):
+    """
+        Apply heatmap on image
+    Args:
+        org_img (PIL img): Original image
+        activation_map (numpy arr): Activation map (grayscale) 0-255
+        colormap_name (str): Name of the colormap
+    """
+    # Get colormap
+    color_map = mpl_color_map.get_cmap(colormap_name)
+    no_trans_heatmap = color_map(activation)
+    # Change alpha channel in colormap to make sure original image is displayed
+    heatmap = copy.copy(no_trans_heatmap)
+    heatmap[:, :, 3] = 0.4
+    heatmap = Image.fromarray((heatmap*255).astype(np.uint8))
+    no_trans_heatmap = Image.fromarray((no_trans_heatmap*255).astype(np.uint8))
+
+    # Apply heatmap on iamge
+    heatmap_on_image = Image.new("RGBA", org_im.size)
+    heatmap_on_image = Image.alpha_composite(heatmap_on_image, org_im.convert('RGBA'))
+    heatmap_on_image = Image.alpha_composite(heatmap_on_image, heatmap)
+    return no_trans_heatmap, heatmap_on_image
