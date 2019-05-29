@@ -1,7 +1,11 @@
 import numpy as np
 from PIL import Image
+from PIL import ImageDraw,ImageFont
+import PIL
 import copy
+import matplotlib.cm as mpl_color_map
 
+## visualize function
 def recreate_image(im_as_var, mean, std):
     """
         Recreates images from a torch variable, sort of reverse preprocessing
@@ -115,6 +119,17 @@ def save_class_activation_images(org_img, activation_map, file_name):
     path_to_file = os.path.join('../results', file_name+'_Cam_Grayscale.png')
     save_image(activation_map, path_to_file)
 
+def generate_colormap(activation, colormap_name):
+    """
+        Generate heatmap on image (PIL.Image)
+    Args:
+        activation_map (numpy arr): Activation map (grayscale) 0~255 shape [224,224]
+        colormap_name (str): Name of color map
+    """
+    color_map = mpl_color_map.get_cmap(colormap_name)
+    no_trans_heatmap = color_map(activation)
+    no_trans_heatmap = Image.fromarray((no_trans_heatmap*255).astype(np.uint8))
+    return no_trans_heatmap
 
 def apply_colormap_on_image(org_im, activation, colormap_name):
     """
@@ -138,3 +153,41 @@ def apply_colormap_on_image(org_im, activation, colormap_name):
     heatmap_on_image = Image.alpha_composite(heatmap_on_image, org_im.convert('RGBA'))
     heatmap_on_image = Image.alpha_composite(heatmap_on_image, heatmap)
     return no_trans_heatmap, heatmap_on_image
+
+
+## Draw function
+def draw_text(im, text, color, length):
+    """
+        Draw text on Image
+    Args:
+        im (PIL image): Original image
+        text (str): [Proliferative DR: 98.2%]
+        color (str): [Green]
+        length (int): length of background for text
+    Return:
+        im (PIL Image)
+    """
+
+    if not Image.isImageType(im):
+        raise TypeError("Input image should be the instance of PIL.Image")
+
+
+    font = ImageFont.truetype("arial.ttf",20)
+    # im.paste(til1,(0,224-30))
+    til2 = Image.new("RGB",(length,30),color)
+    im.paste(til2,(0,224-30))
+    draw = ImageDraw.Draw(im)
+    draw.text((10,198), text,"white",font=font)
+    return im
+
+if __name__=="__main__":
+    ## test Draw function
+    color1 = "green"
+    color2 = "red"
+    #
+    im1 = Image.open('original_5.png')
+    text1 = "Proliferative DR: 98.2%"
+    im1 = draw_text(im1,text1,color1,length=224)
+    #im.save("pro_reconstructed5.tiff")
+    im1.save("pro_original5.tiff")
+    im1.save("pro_original5.png")

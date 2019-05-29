@@ -14,15 +14,20 @@ import torchvision.utils as utils
 import torchvision.transforms as torch_transforms
 from networks import AttnVGG, VGG
 from loss import FocalLoss
-from data import preprocess_data_2016, preprocess_data_2017, ISIC
+from data import preprocess_data_2016, preprocess_data_2017, ISIC, load_data
 from utilities import *
 from transforms import *
 import libadver.attack as attack
+import libadver
 
 print("======>load pretrained models")
 net = AttnVGG(num_classes=2, attention=True, normalize_attn=True, vis = False)
 # net = VGG(num_classes=2, gap=False)
-checkpoint = torch.load('models/checkpoint.pth')
+modelFile = "/home/lrh/program/git/pytorch-example/adversarial-miccai2019/isic2016/IPMI2019-AttnMel/models/checkpoint.pth"
+testCSVFile = "/home/lrh/program/git/pytorch-example/adversarial-miccai2019/isic2016/IPMI2019-AttnMel/test.csv"
+trainCSVFile = "/home/lrh/program/git/pytorch-example/adversarial-miccai2019/isic2016/IPMI2019-AttnMel/train.csv"
+
+checkpoint = torch.load(modelFile)
 net.load_state_dict(checkpoint['state_dict'])
 pretrained_clf = nn.DataParallel(net).cuda()
 pretrained_clf.eval()
@@ -38,21 +43,22 @@ transform = torch_transforms.Compose([
          ToTensor(),
          normalize
     ])
-testset = ISIC(csv_file='test.csv', transform=transform)
+testset = ISIC(csv_file=testCSVFile, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=True, num_workers=4)
 
-trainset = ISIC(csv_file='train.csv', transform=transform)
+trainset = ISIC(csv_file=trainCSVFile, transform=transform)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=8, shuffle=True, num_workers=8, drop_last=True)
 
 print(len(trainloader))
 
 isTrain = False
+isTestDataset = False
 
 params = {
         "attackModelPath" : None,
-        "mag_in" : 7.0,
+        "mag_in" : 5.0,
         "ord" : "inf",
-        "epochNum" : 3,
+        "epochNum" : 1,
         "criterion" : nn.CrossEntropyLoss(),
         "ncInput" : 3,
         "ncOutput" : 3,
@@ -61,7 +67,7 @@ params = {
         "MaxIter" : 100
     }
 print(params)
-saveModelPath = "adversarial_result/GAP_im_m7n3.pth"
+saveModelPath = "adversarial_result/GAP/GAP_im_m5n1.pth"
 attackModel = generators.define(input_nc = params["ncInput"], output_nc = params["ncOutput"],
                                 ngf = 64, gen_type = "unet", norm="batch", act="relu", gpu_ids = [0])
 
@@ -79,14 +85,48 @@ else:
     GAPAttack = attack.GenerativeAdversarialPerturbations(pretrained_clf, attackModel, **params)
     correct = 0
     total = 0
-    for i, data in enumerate(testloader):
-        images, labels = data['image'], data['label']
-        images, labels = images.cuda(), labels.cuda()
+
+    if isTestDataset:
+
+        for i, data in enumerate(testloader):
+            images, labels = data['image'], data['label']
+            images, labels = images.cuda(), labels.cuda()
+            adv_images = GAPAttack.generate(images)
+            predicted,_,_ = pretrained_clf(adv_images)
+            predicted_labels = torch.argmax(predicted,1)
+            #print(predicted_labels)
+            correct += torch.sum(predicted_labels.eq(labels))
+            #print(targets)
+            total += images.shape[0]
+            print("ACC:%.3f | %d,%d" %(100.0*float(correct) / total, correct, total))
+
+    else:
+        images, labels = load_data(isBenign = False, transform = transform)
         adv_images = GAPAttack.generate(images)
+        predicted,_,_ = pretrained_clf(images)
+        print(torch.softmax(predicted,1))
         predicted,_,_ = pretrained_clf(adv_images)
+        print(torch.softmax(predicted,1))
         predicted_labels = torch.argmax(predicted,1)
         #print(predicted_labels)
         correct += torch.sum(predicted_labels.eq(labels))
         #print(targets)
         total += images.shape[0]
         print("ACC:%.3f | %d,%d" %(100.0*float(correct) / total, correct, total))
+
+
+        ###save image
+        delta_ims = adv_images - images
+        images = images.cpu()
+        adv_images = adv_images.cpu()
+        delta_ims = delta_ims.cpu()
+
+        adv_image = adv_images[4]
+        adv_image_PIL = libadver.visutils.recreate_image(adv_image,mean,std)
+        libadver.visutils.save_image(adv_image_PIL,"adversarial_result/GAP/malignant/adv_img_4.png")
+
+        #delta_im = delta_ims[0].data.numpy()
+        delta_im = delta_ims[4]
+        #libadver.visutils.save_gradient_images(delta_im,"adversarial_result/GAP/benign/delta_im_0.png")
+        delta_im_PIL = libadver.visutils.recreate_image(delta_im,mean,std)
+        libadver.visutils.save_image(delta_im_PIL,"adversarial_result/GAP/malignant/delta_im_4.png")

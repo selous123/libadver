@@ -6,6 +6,8 @@ import glob
 import numpy as np
 import torch
 import torch.utils.data as udata
+from transforms import *
+from torchvision.transforms import transforms
 
 def preprocess_data_2016(root_dir):
     print('pre-processing data ...\n')
@@ -180,3 +182,49 @@ class ISIC(udata.Dataset):
         if self.transform:
             sample = self.transform(sample)
         return sample
+
+def load_data(isBenign = False, transform = None):
+    """
+        Return Images (torch.FloatTensor), Labels (torch.LongTensor)
+    """
+    #isBenign = False
+    benignRoot = "./adversarial_result/ori_img/benign"
+    malignantRoot = "./adversarial_result/ori_img/malignant"
+
+    benignImgs = [
+        "ISIC_0000234.jpg","ISIC_0000254.jpg", "ISIC_0000271.jpg",
+        "ISIC_0000325.jpg","ISIC_0000319.jpg"
+    ]
+    malignImgs = [
+        "ISIC_0000549.jpg", "ISIC_0001103.jpg", "ISIC_0001142.jpg",
+        "ISIC_0000547.jpg", "ISIC_0000074_ma.jpg"
+    ]
+
+    if isBenign is True:
+        Imgs = benignImgs
+        Root = benignRoot
+        label = 0
+    else:
+        Imgs = malignImgs
+        Root = malignantRoot
+        label = 1
+
+    images = torch.zeros([5,3,224,224])
+    labels = torch.zeros([5])
+
+    for batchIdx, Img in enumerate(Imgs):
+        benignPath = os.path.join(Root, Img)
+        img = Image.open(benignPath)
+        sample = {'image': img, 'image_seg': img, 'label': label}
+        if transform is not None:
+            t_sample = transform(sample)
+        img = t_sample["image"]
+        #img.unsqueeze_(0)
+        images[batchIdx] = img
+        labels[batchIdx] = t_sample['label']
+        #print(images.shape)
+    # print(img1.shape)
+    images = images.cuda()
+    labels = labels.type(torch.LongTensor).cuda()
+
+    return images, labels
