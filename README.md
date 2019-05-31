@@ -94,7 +94,7 @@ The severity of noise must be either 1,2,3,4,5
 
 examples
 
-'''
+```
 import libadver.benchmark as benchmark
 import torch
 import torchvision.transforms as transforms
@@ -116,7 +116,7 @@ Benchmark_C_dataset_loader = torch.utils.data.DataLoader(Benchmark_C_dataset, ba
 
 for _ in Benchmark_C_dataset_loader: continue
 print("\ndone")
-'''
+```
 
 ### 2.Benchmark_P
 
@@ -126,7 +126,7 @@ The frameNum for benchmark_p must be a positive integer.
 
 examples
 
-'''
+```
 import libadver.benchmark as benchmark
 params = {
         "dataroot" : "/home/lrh/dataset/ISIC_data_2016/robustness/",
@@ -140,7 +140,7 @@ print("making Benchmark_P.....")
 benchmark.Benchmark_P_Generator(**params)
 
 print("\ndone")
-'''
+```
 
 
 ## Comming soon
