@@ -84,10 +84,68 @@ For runable examples, see from [projected_gradient_descent.py]()
 
 6....
 
+## Benchmark for robustness
+
+### 1.Benchmark_C
+
+The method for creating benchmark_c must be either "gaussian_noise", "shot_noise", "impulse_noise", "defocus_blur", "glass_blur", "motion_blur", "zoom_blur", "snow", "frost", "fog", "brightness", "contrast", "elastic_transform", "pixelate", "jpeg_compression", "speckle_noise", "gaussian_blur", "saturate".
+
+The severity of noise must be either 1,2,3,4,5
+
+examples
+
+'''
+import libadver.benchmark as benchmark
+import torch
+import torchvision.transforms as transforms
+
+dataroot = "/home/lrh/dataset/ISIC_data_2016/robustness"
+saveroot = "/home/lrh/dataset/ISIC_data_2016/robustness_c_test/"
+
+params = {
+    "method" : "snow",
+    "severity" : 2,
+}
+params["dataroot"] = dataroot
+params["saveroot"] = saveroot
+print(params)
+
+print("making Benchmark_C.....")
+Benchmark_C_dataset = benchmark.Benchmark_C_Generator(transform=transforms.Compose([transforms.Resize(256), transforms.CenterCrop(224)]),**params)
+Benchmark_C_dataset_loader = torch.utils.data.DataLoader(Benchmark_C_dataset, batch_size=10, shuffle=False, num_workers=4)
+
+for _ in Benchmark_C_dataset_loader: continue
+print("\ndone")
+'''
+
+### 2.Benchmark_P
+
+The method for creating benchmark_p must be either "gaussian_noise", "shot_noise", "motion_blur", "zoom_blur", "snow", "brightness", "rotate","tilt","scale","translate" ,"spatter","speckle_noise", "gaussian_blur", "saturate","shear".
+
+The frameNum for benchmark_p must be a positive integer.
+
+examples
+
+'''
+import libadver.benchmark as benchmark
+params = {
+        "dataroot" : "/home/lrh/dataset/ISIC_data_2016/robustness/",
+        "saveroot" : "/home/lrh/dataset/ISIC_data_2016/robustness_p",
+        "method" : "shear",
+        "frameNum": 5
+}
+
+
+print("making Benchmark_P.....")
+benchmark.Benchmark_P_Generator(**params)
+
+print("\ndone")
+'''
+
+
 ## Comming soon
 1. defence
 
-2. benchmark for robustness
 
 ## License
 This project is licensed under the [Anti 996](https://github.com/996icu/996.ICU/blob/master/LICENSE)
