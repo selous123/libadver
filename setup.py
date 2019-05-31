@@ -9,4 +9,5 @@ setup(name='libadver',
       license='Anti 996',
       #packages=['vistools'],
       packages = find_packages(),
+      include_package_data = True,
       zip_safe=False)
