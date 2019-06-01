@@ -8,7 +8,8 @@
 # import torchvision.transforms as trn
 # import torch.utils.data as data
 # import numpy as np
-from libadver.defence.utils import *
+from libadver.benchmark.utils import *
+#from utils import *
 # #from utils import *
 #
 # from PIL import Image
@@ -134,7 +135,7 @@ if __name__=="__main__":
     # #from utils import *
     #
     # from PIL import Image
-    import libadver.defence as defence
+#    import libadver.defence as defence
     import cv2
     import torch
     import torchvision.transforms as transforms
@@ -143,8 +144,8 @@ if __name__=="__main__":
     saveroot = "/home/lrh/dataset/ISIC_data_2016/Val_robustness_C/"
 
     params = {
-        "method" : "snow",
-        "severity" : 3,
+        "method" : "frost",
+        "severity" : 2,
     }
     params["dataroot"] = dataroot
     params["saveroot"] = saveroot
