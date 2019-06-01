@@ -116,6 +116,9 @@ class GenerativeAdversarialPerturbations():
         recons = torch.add(x, deltaIm)
         for cii in range(self.ncInput):
             recons.data[:,cii,:,:] = recons.data[:,cii,:,:].clamp(inputs.data[:,cii,:,:].min(), inputs.data[:,cii,:,:].max())
+
+        #post_l_inf = (recons.data - inputs[0:recons.size(0)].data).abs().max() * 255.0
+        #print("Specified l_inf: ", self.mag_in, ", maximum l_inf of generated perturbations: ", post_l_inf)
         return recons
 
 
@@ -137,12 +140,13 @@ class GenerativeAdversarialPerturbations():
         self.attackModelPath = attackModelPath
         self.epochNum = epochNum
         self.ord = ord
-        self.mag_in = 15
+        self.mag_in = mag_in
         self.ncInput = ncInput
         self.ncOutput = ncOutput
         self.MaxIter = MaxIter
         self.mean = mean
         self.std = std
+
 
         self.criterion = criterion
         self.optimizerG = optimizerG

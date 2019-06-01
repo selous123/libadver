@@ -10,7 +10,11 @@
 .ipynb_checkpoints/
 #pytorch pth file
 *.pth
+*.pkl
 
 #Image File
 *.png
 *.jpg
+*.csv
+*.npy
+*.txt
