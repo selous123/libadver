@@ -146,6 +146,9 @@ print("\ndone")
 ## Comming soon
 1. defence
 
+## License 
+
+This project is licensed under the GNU General Public License v3.0. The terms and conditions can be found in the LICENSE files.
 
 ## Contribution
 Tao Zhang (lrhselous@nuaa.edu.cn)
